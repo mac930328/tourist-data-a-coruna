@@ -33,7 +33,7 @@ Instalación y uso:
 
 1. Clonar el repositorio:
 
-git clone <repo_url>
+git clone [<repo_url>](https://github.com/LizethDayannaSC/tourist-data-a-coruna.git)
 cd diva-streamlit
 
 2. Crear un entorno virtual (opcional):
