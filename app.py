@@ -3,7 +3,7 @@ import pandas as pd
 
 from services.api_data import fetch_diva_data
 from processing.cleaning import clean_diva_data
-from analysis.eda import basic_stats, nulls_summary
+from analysis.eda import basic_stats
 
 st.set_page_config(
     page_title="DIVA Data Analysis",
@@ -35,10 +35,6 @@ st.dataframe(raw_df.head(100), width='stretch')
 # ---------------- CLEAN DATA ----------------
 st.subheader("🧹 Datos limpios")
 st.dataframe(clean_df.head(100), width='stretch')
-
-# ---------------- NULLS ----------------
-st.subheader("🚨 Valores nulos")
-st.dataframe(nulls_summary(clean_df), width='stretch')
 
 # ---------------- STATS ----------------
 st.subheader("📈 Estadísticas descriptivas")
