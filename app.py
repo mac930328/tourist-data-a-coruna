@@ -331,7 +331,10 @@ st.dataframe(
     use_container_width=True
 )
 
-num_cols = clean_df.select_dtypes(include="number").columns
+num_cols = [
+    col for col in clean_df.select_dtypes(include="number").columns
+    if col not in ["año", "mes"]
+]
 
 if len(num_cols) > 0:
     st.subheader(" Explorador Dinámico")
@@ -339,7 +342,7 @@ if len(num_cols) > 0:
     col1, col2 = st.columns([1, 3])
     with col1:
         variable = st.selectbox("Métrica", num_cols)
-        agrupacion = st.selectbox("Agrupar por", ["nacionalidad", "rango_edad", "clase_comprador"])
+        agrupacion = st.selectbox("Agrupar por", ["nacionalidad", "rango_edad", "clase_comprador", "año", "mes"])
     
     with col2:
         # Creamos un gráfico que resume la media de la métrica por el grupo elegido
@@ -499,34 +502,51 @@ col1, col2, col3, col4 = st.columns(4)
 
 with col1:
     # Usamos 'porcentaje_transacciones' como indicador de volumen de actividad (Turistas)
-    volumen_total = df_filtered['porcentaje_transacciones'].sum()
+    volumen_promedio = df_filtered['porcentaje_transacciones'].mean()
+    ano_corriente = df_filtered['año'].max()
+    ano_anterior = ano_corriente - 1
+    vol_promedio_corriente = df_filtered[df_filtered['año'] == ano_corriente]['porcentaje_transacciones'].mean()
+    vol_promedio_anterior = df_filtered[df_filtered['año'] == ano_anterior]['porcentaje_transacciones'].mean()
+    delta_vol = ((vol_promedio_corriente - vol_promedio_anterior) / vol_promedio_anterior * 100) if vol_promedio_anterior else 0
     st.metric(
-        label="Volumen Actividad", 
-        value=f"{volumen_total:.2f}%", 
-        delta="8% vs año anterior"
+        label="Volumen Promedio de Actividad", 
+        value=f"{volumen_promedio:.2f}%", 
+        delta=f"{delta_vol:.2f}% vs año anterior"
     )
 
 with col2:
     gasto_promedio = df_filtered['gasto_medio'].mean()
+    gasto_promedio_corriente = df_filtered[df_filtered['año'] == ano_corriente]['gasto_medio'].mean()
+    gasto_promedio_anterior = df_filtered[df_filtered['año'] == ano_anterior]['gasto_medio'].mean()
+    delta_gasto = ((gasto_promedio_corriente - gasto_promedio_anterior) / gasto_promedio_anterior * 100) if gasto_promedio_anterior else 0
     st.metric(
         label="Gasto Medio", 
         value=f"{gasto_promedio:.2f}€", 
-        delta="15.2€"
+        delta=f"{delta_gasto:.2f}% vs año anterior"
     )
 
 with col3:
     # Calculamos la recuperación comparando con el año base 2019 (si está en los datos)
-    st.metric(
-        label="Recuperación Pre-Pandemia", 
-        value="92%", 
-        delta_color="normal"
+    if 2019 in df_filtered['año'].unique():
+        gasto_2019 = df_filtered[df_filtered['año'] == 2019]['gasto_medio'].mean()
+        recuperacion = (gasto_promedio / gasto_2019 * 100) if gasto_2019 else 0
+        st.metric(
+            label="Recuperación Pre-Pandemia", 
+            value=f"{recuperacion:.2f}%", 
+            delta_color="normal"
+        )
+    else:
+        st.metric(
+            label="Recuperación Pre-Pandemia", 
+            value="0%", 
+            delta_color="normal"
     )
 
 with col4:
     # Buscamos la nacionalidad con mayor porcentaje de gasto acumulado
-    top_nacionalidad = df_filtered.groupby('nacionalidad')['porcentaje_gasto'].sum().idxmax()
+    top_nacionalidad = df_filtered.groupby('nacionalidad')['porcentaje_gasto'].mean().idxmax()
     st.metric(
-        label="Top Nacionalidad", 
+        label="Top Nacionalidad (% Gasto Promedio)",
         value=top_nacionalidad
     )
 
@@ -538,18 +558,30 @@ c1, c2 = st.columns([2, 1])
 
 with c1:
     st.subheader("📈 Evolución del Gasto Medio por Nacionalidad")
-    # Usamos 'gasto_medio' para el eje Y y 'nacionalidad' para el color
-    # Asegúrate de haber creado la columna 'Fecha' previamente combinando año y mes
+
+    nacionalidades = sorted(df_filtered["nacionalidad"].unique())
+
+    nationalidades_select = st.multiselect(
+        "Selecciona hasta 4 nacionalidades",
+        options=nacionalidades,
+        default=nacionalidades[:4],
+        max_selections=4
+    )
+
+    df_plot = df_filtered[
+        df_filtered["nacionalidad"].isin(nationalidades_select)
+    ]
+
     fig_line = px.line(
-        df_filtered,
+        df_plot,
         x="Fecha",
         y="gasto_medio",
         color="nacionalidad",
-        template="plotly_white",
-        line_shape="spline",
-        labels={"gasto_medio": "Gasto Medio (€)", "Fecha": "Mes de visita"}
+        labels={
+            "gasto_medio": "Gasto Medio (€)",
+            "Fecha": "Mes de visita"
+        }
     )
-    fig_line.update_layout(hovermode="x unified")
     st.plotly_chart(fig_line, use_container_width=True)
 
 with c2:
@@ -604,18 +636,26 @@ st.info("Basado en los datos actuales, se estima un crecimiento del 12% en el se
 # -------------------------------------------------------
 st.divider()
 st.subheader("Mapa de Calor: Estacionalidad del Gasto")
+mes_mapa = {
+    1: 'Ene', 2: 'Feb', 3: 'Mar', 4: 'Abr',
+    5: 'May', 6: 'Jun', 7: 'Jul', 8: 'Ago',
+    9: 'Sep', 10: 'Oct', 11: 'Nov', 12: 'Dic'
+}
+
+df_filtered['mes_nombre'] = df_filtered['mes'].map(mes_mapa)
 
 pivot_df = df_filtered.pivot_table(
     index='nacionalidad', 
-    columns='mes', 
+    columns='mes_nombre', 
     values='gasto_medio', 
     aggfunc='mean'
 )
-
+orden_meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic']
+pivot_df = pivot_df.reindex(columns=orden_meses)
+pivot_df = pivot_df.fillna('No data')
 fig_heatmap = px.imshow(
     pivot_df,
     labels=dict(x="Mes", y="País", color="Gasto Medio"),
-    x=['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
     color_continuous_scale='Viridis'
 )
 st.plotly_chart(fig_heatmap, use_container_width=True)
@@ -664,4 +704,3 @@ fig_tree = px.treemap(
     title="Cuota de Gasto por País y Edad"
 )
 st.plotly_chart(fig_tree, use_container_width=True)
-
