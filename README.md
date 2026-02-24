@@ -12,6 +12,8 @@ Aplicación interactiva desarrollada con **Streamlit** para consultar, limpiar y
 - Proporcionar análisis exploratorio interactivo.
 - Visualizar datos numéricos de manera sencilla.
 - Permitir refrescar los datos con un botón.
+- Garantizar coherencia en métricas agregadas mediante promedios (avg).
+- Mostrar comparativas temporales dinámicas y métricas de recuperación fiables.
 
 ---
 
@@ -112,25 +114,17 @@ http://localhost:8501
   - Datos limpios
   - Estadísticas
   - Gráficos interactivos
+  - Comparativas interanuales
 
 ---
+## Mejoras implementadas en el MVP
 
-## Mejores prácticas
-
-- Mantener las dependencias actualizadas en `requirements.txt`.
-- Usar `st.cache_data` para no volver a descargar la API en cada recarga.
-- Manejar errores de red (requests) si la API no responde.
-- Limpiar periódicamente columnas que contengan datos inconsistentes.
-
----
-
-## Posibles mejoras
-
-- Añadir mapas interactivos (`st.map`) si hay coordenadas.
-- Filtros dinámicos por provincia, CCAA o categorías.
-- Botón para descargar CSV limpio.
-- Deploy automático en Streamlit Cloud o Docker.
-- Integración con herramientas de análisis avanzado (Plotly, Seaborn).
+- Todos los porcentajes ahora se calculan como promedios (avg) para garantizar coherencia en las métricas mostradas.
+- Los deltas funcionan correctamente, calculándose dinámicamente frente al año anterior.
+- La métrica de recuperación pre-pandemia refleja correctamente los valores reales frente al periodo base.
+- Año y mes redefinidos como dimensiones analíticas.
+- Límite de selección de nacionalidades en gráficos comparativos.
+- Corrección en el mapa de calor mostrando NaN en ausencia de datos.
 
 ---
 
