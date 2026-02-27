@@ -1,0 +1,35 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql_container
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: 12345678
+      MYSQL_DATABASE: TFM
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./docs/TFM_BD.sql:/docker-entrypoint-initdb.d/1_tfm_bd.sql
+      - ./docs/Insert.sql:/docker-entrypoint-initdb.d/2_insert.sql
+      - ./docs/dataset:/var/lib/mysql-files
+
+  streamlit:
+    build: .
+    container_name: streamlit_app
+    ports:
+      - "8502:8501"
+    depends_on:
+      - mysql
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    restart: always
+    ports:
+      - "8080:80"
+    environment:
+      PMA_HOST: mysql
+      PMA_USER: root
+      PMA_PASSWORD: 12345678
+    depends_on:
+      - mysql

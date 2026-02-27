@@ -266,6 +266,10 @@ if refresh:
 with st.spinner("Consultando API y procesando datos..."):
     raw_df, clean_df = load_data()
 
+if raw_df.empty:
+    st.error("No se pudieron cargar datos de la API.")
+    st.stop()
+
 # 1. Creamos las pestañas definiendo sus nombres
 # 1. Inyección de CSS personalizado
 st.markdown("""

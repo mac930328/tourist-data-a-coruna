@@ -12,18 +12,28 @@ HEADERS = {
 }
 
 def fetch_diva_data():
-    response = requests.get(API_URL)
-    response.raise_for_status()
+    try:
+        response = requests.get(API_URL, headers=HEADERS, timeout=15)
+        response.raise_for_status()
 
-    for enc in ("utf-8", "latin-1", "iso-8859-1", "cp1252"):
-        try:
-            df = pd.read_csv(BytesIO(response.content), encoding=enc, sep=";", decimal=",")
-            print(f"Leído correctamente con encoding: {enc}")
-            print(df.head())
-            print(df.columns.tolist())
-            return df
-        except UnicodeDecodeError:
-            continue
+        for enc in ("utf-8", "latin-1", "iso-8859-1", "cp1252"):
+            try:
+                df = pd.read_csv(
+                    BytesIO(response.content),
+                    encoding=enc,
+                    sep=";",
+                    decimal=","
+                )
+                return df
+            except UnicodeDecodeError:
+                continue
 
-    raise ValueError("No se pudo decodificar el CSV con ningún encoding")
+        raise ValueError("No se pudo decodificar el CSV con ningún encoding")
 
+    except requests.exceptions.Timeout:
+        print("Timeout al conectar con la API")
+        return pd.DataFrame()
+
+    except requests.exceptions.RequestException as e:
+        print(f"Error en la API: {e}")
+        return pd.DataFrame()
