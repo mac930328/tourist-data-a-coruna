@@ -270,7 +270,7 @@ def load_data():
         clean_turismo['Fecha'] = pd.to_datetime(clean_turismo['año'].astype(str) + '-' + clean_turismo['mes'].astype(str) + '-01')
     datasets['turismo_receptor'] = {'raw': raw_turismo, 'clean': clean_turismo}
     
-    time.sleep(5)
+    time.sleep(60)
     
     # Actividades ocio data
     raw_ocio = fetch_actividades_ocio_data()
@@ -354,17 +354,6 @@ st.markdown("""
     }
     </style>
     """, unsafe_allow_html=True)
-
-tab1, tab2 = st.tabs([" Datos limpios (DIVA)", " Datos originales (DIVA)"])
-
-# 2. Usamos el bloque 'with' para cada pestaña
-with tab1:
-    st.subheader("Vista previa de datos procesados (DIVA)")
-    st.dataframe(clean_df.head(100), use_container_width=True)
-
-with tab2:
-    st.subheader("Vista previa de datos brutos (DIVA)")
-    st.dataframe(datasets['diva']['raw'].head(100), use_container_width=True)
 
 # -------------------------------------------------------
 # DATOS ADICIONALES

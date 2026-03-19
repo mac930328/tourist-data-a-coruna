@@ -64,7 +64,7 @@ def fetch_diva_data():
         return pd.DataFrame()
 
     except requests.exceptions.Timeout:
-        print("Timeout al conectar con la API")
+        print("Timeout al conectar con la API al obtener el dataset DIVA_DL")
         return pd.DataFrame()
 
     except requests.exceptions.RequestException as e:
@@ -73,7 +73,7 @@ def fetch_diva_data():
     
 def fetch_turismo_receptor_data():
     try:
-        response = requests.get(TURISMO_RECEPTOR_MUN_PAIS_DL_URL, headers=HEADERS["octect-stream"], timeout=15)
+        response = requests.get(TURISMO_RECEPTOR_MUN_PAIS_DL_URL, headers=HEADERS["octect-stream"], timeout=60)
         response.raise_for_status()
 
         for enc in ("utf-8", "latin-1", "iso-8859-1", "cp1252"):
@@ -92,7 +92,7 @@ def fetch_turismo_receptor_data():
         return pd.DataFrame()
 
     except requests.exceptions.Timeout:
-        print("Timeout al conectar con la API")
+        print("Timeout al conectar con la API al obtener el dataset TURISMO_RECEPTOR_MUN_PAIS_DL")
         return pd.DataFrame()
 
     except requests.exceptions.RequestException as e:
@@ -127,7 +127,7 @@ def fetch_actividades_ocio_data():
         return pd.DataFrame()
 
     except requests.exceptions.Timeout:
-        print("Timeout al conectar con la API")
+        print("Timeout al conectar con la API al obtener el dataset ACTIVIDADES_OCIO_DL")
         return pd.DataFrame()
 
     except requests.exceptions.RequestException as e:
@@ -162,7 +162,7 @@ def fetch_conectividad_aerea_data():
         return pd.DataFrame()
 
     except requests.exceptions.Timeout:
-        print("Timeout al conectar con la API")
+        print("Timeout al conectar con la API al obtener el dataset CONECTIVIDAD_AEREA_RESERVAS_MOMENTO_COMPRA_DL")
         return pd.DataFrame()
 
     except requests.exceptions.RequestException as e:
@@ -197,7 +197,7 @@ def fetch_ind_rentabilidad_provincia_data():
         return pd.DataFrame()
 
     except requests.exceptions.Timeout:
-        print("Timeout al conectar con la API")
+        print("Timeout al conectar con la API al obtener el dataset IND_RENTABILIDAD_PROVINCIA_DL")
         return pd.DataFrame()
 
     except requests.exceptions.RequestException as e:
