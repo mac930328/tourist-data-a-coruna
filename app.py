@@ -6,9 +6,10 @@ import numpy as np
 import folium
 from streamlit_folium import st_folium
 import datetime
+import time
 
-from services.api_data import fetch_diva_data
-from processing.cleaning import clean_diva_data
+from services.api_data import fetch_diva_data, fetch_actividades_ocio_data, fetch_turismo_receptor_data, fetch_conectividad_aerea_data, fetch_ind_rentabilidad_provincia_data
+from processing.cleaning import clean_data
 from analysis.eda import basic_stats
 
 # -------------------------------------------------------
@@ -251,10 +252,52 @@ st_folium(m, width="100%", height=500)
 st.divider()
 @st.cache_data(ttl=3600)
 def load_data():
-    raw_df = fetch_diva_data()
-    clean_df = clean_diva_data(raw_df)
-    clean_df['Fecha'] = pd.to_datetime(clean_df['año'].astype(str) + '-' + clean_df['mes'].astype(str) + '-01')
-    return raw_df, clean_df
+    datasets = {}
+    
+    # DIVA data
+    raw_diva = fetch_diva_data()
+    clean_diva = clean_data(raw_diva)
+    if 'año' in clean_diva.columns and 'mes' in clean_diva.columns:
+        clean_diva['Fecha'] = pd.to_datetime(clean_diva['año'].astype(str) + '-' + clean_diva['mes'].astype(str) + '-01')
+    datasets['diva'] = {'raw': raw_diva, 'clean': clean_diva}
+    
+    time.sleep(5)
+    
+    # Turismo receptor data
+    raw_turismo = fetch_turismo_receptor_data()
+    clean_turismo = clean_data(raw_turismo)
+    if 'año' in clean_turismo.columns and 'mes' in clean_turismo.columns:
+        clean_turismo['Fecha'] = pd.to_datetime(clean_turismo['año'].astype(str) + '-' + clean_turismo['mes'].astype(str) + '-01')
+    datasets['turismo_receptor'] = {'raw': raw_turismo, 'clean': clean_turismo}
+    
+    time.sleep(5)
+    
+    # Actividades ocio data
+    raw_ocio = fetch_actividades_ocio_data()
+    clean_ocio = clean_data(raw_ocio)
+    if 'año' in clean_ocio.columns and 'mes' in clean_ocio.columns:
+        clean_ocio['Fecha'] = pd.to_datetime(clean_ocio['año'].astype(str) + '-' + clean_ocio['mes'].astype(str) + '-01')
+    datasets['actividades_ocio'] = {'raw': raw_ocio, 'clean': clean_ocio}
+    
+    time.sleep(5)
+    
+    # Conectividad aerea data
+    raw_aerea = fetch_conectividad_aerea_data()
+    clean_aerea = clean_data(raw_aerea)
+    if 'año' in clean_aerea.columns and 'mes' in clean_aerea.columns:
+        clean_aerea['Fecha'] = pd.to_datetime(clean_aerea['año'].astype(str) + '-' + clean_aerea['mes'].astype(str) + '-01')
+    datasets['conectividad_aerea'] = {'raw': raw_aerea, 'clean': clean_aerea}
+    
+    time.sleep(5)
+    
+    # Rentabilidad provincia data
+    raw_rent = fetch_ind_rentabilidad_provincia_data()
+    clean_rent = clean_data(raw_rent)
+    if 'año' in clean_rent.columns and 'mes' in clean_rent.columns:
+        clean_rent['Fecha'] = pd.to_datetime(clean_rent['año'].astype(str) + '-' + clean_rent['mes'].astype(str) + '-01')
+    datasets['rentabilidad_provincia'] = {'raw': raw_rent, 'clean': clean_rent}
+    
+    return datasets
 
 with st.sidebar:
     st.header("⚙️ Opciones")
@@ -263,12 +306,16 @@ with st.sidebar:
 if refresh:
     st.cache_data.clear()
 
-with st.spinner("Consultando API y procesando datos..."):
-    raw_df, clean_df = load_data()
+with st.spinner("Consultando APIs y procesando datos..."):
+    datasets = load_data()
 
-if raw_df.empty:
-    st.error("No se pudieron cargar datos de la API.")
+# Check if at least DIVA data loaded
+if datasets['diva']['raw'].empty:
+    st.error("No se pudieron cargar datos de la API DIVA.")
     st.stop()
+
+# For stats and explorer, use DIVA data as primary
+clean_df = datasets['diva']['clean']
 
 # 1. Creamos las pestañas definiendo sus nombres
 # 1. Inyección de CSS personalizado
@@ -308,16 +355,34 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-tab1, tab2 = st.tabs([" Datos limpios", " Datos originales"])
+tab1, tab2 = st.tabs([" Datos limpios (DIVA)", " Datos originales (DIVA)"])
 
 # 2. Usamos el bloque 'with' para cada pestaña
 with tab1:
-    st.subheader("Vista previa de datos procesados")
+    st.subheader("Vista previa de datos procesados (DIVA)")
     st.dataframe(clean_df.head(100), use_container_width=True)
 
 with tab2:
-    st.subheader("Vista previa de datos brutos")
-    st.dataframe(raw_df.head(100), use_container_width=True)
+    st.subheader("Vista previa de datos brutos (DIVA)")
+    st.dataframe(datasets['diva']['raw'].head(100), use_container_width=True)
+
+# -------------------------------------------------------
+# DATOS ADICIONALES
+# -------------------------------------------------------
+st.divider()
+st.subheader("📊 Datos de Todas las APIs")
+
+dataset_tabs = st.tabs([name.replace('_', ' ').title() for name in datasets.keys()])
+
+for i, name in enumerate(datasets.keys()):
+    with dataset_tabs[i]:
+        raw_tab, clean_tab = st.tabs(["Datos Originales", "Datos Limpios"])
+        
+        with raw_tab:
+            st.dataframe(datasets[name]['raw'].head(100), use_container_width=True)
+        
+        with clean_tab:
+            st.dataframe(datasets[name]['clean'].head(100), use_container_width=True)
 
 
 

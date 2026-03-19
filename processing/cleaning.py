@@ -1,7 +1,13 @@
 import pandas as pd
 
-def clean_diva_data(df: pd.DataFrame) -> pd.DataFrame:
+def clean_data(df: pd.DataFrame) -> pd.DataFrame:
+    if df.empty:
+        return df
+    
     df = df.copy()
+
+    # Asegurar que los nombres de columnas sean strings
+    df.columns = pd.Index([str(col) for col in df.columns])
 
     # Normalizar nombres de columnas
     df.columns = (
